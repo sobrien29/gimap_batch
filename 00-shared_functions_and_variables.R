@@ -7,7 +7,7 @@
 plot_theme <- theme(axis.text = element_text(colour="black"),
                     axis.ticks = element_line(color="black"))
 
-plot_options <- list(theme_bw(base_size = 12))
+plot_options <- list(theme_bw(base_size = 36))
 
 
 ## set default aspect ratios
