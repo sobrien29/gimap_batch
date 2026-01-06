@@ -157,6 +157,7 @@ sample_cor_heatmap_unfiltered <- pheatmap(d.counts_cpm_cor,
                                           cex = 1, clustering_distance_cols = "euclidean",
                                           cluster_method = "complete")
 sample_cor_heatmap_unfiltered
+save_plot(sample_cor_heatmap_unfiltered)
 
 ## flag pgRNAs with count = 0 at any time point
 d.counts_cpm_filter <- d.counts_cpm %>%
