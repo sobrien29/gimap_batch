@@ -327,13 +327,13 @@ d.lfc_annot_adj <- d.lfc_annot %>%
   )
 
 
-adjusted_norm_ctrl_violin_plot <- make_norm_ctrl_violin_plot(d.lfc_annot_adj, "lfc_adj2", "adjusted_LFC")
+CS_pgRNA_violin_plot <- make_norm_ctrl_violin_plot(d.lfc_annot_adj, "lfc_adj2", "CRISPR score")
 
-adjusted_norm_ctrl_violin_plot +
-  facet_wrap(~rep)
+CS_pgRNA_violin_plot +
+    facet_wrap(~rep)
 
-save_plot(adjusted_norm_ctrl_violin_plot)
-save_plot(adjusted_norm_ctrl_violin_plot + facet_wrap((~rep)))
+save_plot(CS_pgRNA_violin_plot)
+save_plot(CS_pgRNA_violin_plot + facet_wrap((~rep)))
 
 d.lfc_annot_adj_single <- d.lfc_annot_adj %>%
   filter(target_type == "gene_ctrl" | target_type == "ctrl_gene") %>%
@@ -354,9 +354,9 @@ d.lfc_annot_adj_single_summary <- d.lfc_annot_adj_single %>%
 print_kbl(d.lfc_annot_adj_single_summary)
 ##this is now summarizing the median adj lfc depending on expression of single targeting
 
-##Alice adjusted to keep showing adj2 instead of adj3
+##Alice adjusted to keep showing adj2 (CRISPR score) instead of adj3 (CS adjusted by Exp)
 
-adjusted_expression_singletargeting <- d.lfc_annot_adj_single %>%
+CS_by_expression_singletargeting <- d.lfc_annot_adj_single %>%
   filter(!is.na(gene1_log2_tpm) | !is.na(gene2_log2_tpm)) %>%
   ggplot(aes(x = lfc_adj2, fill = unexpressed_ctrl_flag)) +
   geom_density(alpha = 0.7) +
@@ -369,14 +369,14 @@ adjusted_expression_singletargeting <- d.lfc_annot_adj_single %>%
   scale_color_discrete(name = "expression_group", 
                        limits = c(FALSE, TRUE),
                        labels = c("expressed", "unexpressed")) +
-  labs(x = "adjusted_lfc") +
+  labs(x = "CRISPR score") +
   plot_options +
   plot_theme +
   theme(aspect.ratio = wide_ar) +
   facet_wrap(~rep)
 
-adjusted_expression_singletargeting
-save_plot(adjusted_expression_singletargeting)
+CS_by_expression_singletargeting
+save_plot(CS_by_expression_singletargeting)
 
 d.lfc_annot_adj_double <- d.lfc_annot_adj %>%
   filter(target_type == "gene_gene") %>%
@@ -407,19 +407,19 @@ d.lfc_annot_adj_double_plot_summary <- d.lfc_annot_adj_double_plot %>%
   summarize(median = median(lfc_adj2))
 
 
-adj_expression_doubletargeting <- ggplot(d.lfc_annot_adj_double_plot, aes(x = lfc_adj2, fill = n_genes_expressed)) +
+CS_by_expression_doubletargeting <- ggplot(d.lfc_annot_adj_double_plot, aes(x = lfc_adj2, fill = n_genes_expressed)) +
   geom_density(alpha = 0.7) +
   geom_vline(data = d.lfc_annot_adj_double_plot_summary,
              aes(xintercept = median, color = n_genes_expressed),
              linetype = "dashed") +
-  labs(x = "adjusted_lfc") +
+  labs(x = "CRISPR score") +
   plot_options +
   plot_theme +
   theme(aspect.ratio = wide_ar) +
   facet_wrap(~rep)
 
-adj_expression_doubletargeting
-save_plot(adj_expression_doubletargeting)
+CS_by_expression_doubletargeting
+save_plot(CS_by_expression_doubletargeting)
 
 ##Left of here 12/31 - need to figure out what rejoining is required if any
 ### ntc_ntc
@@ -440,11 +440,10 @@ d.lfc_annot_adj_double <- d.lfc_annot_adj_double %>%
 ## bind rows
 d.lfc_annot_adj_pgRNA <- bind_rows(d.lfc_annot_adj_double, d.lfc_annot_adj_single, d.lfc_annot_adj_control)
 
-## keep only columns of interest
+## rename final adjusted column to CRISPR_score
 d.lfc_annot_adj_pgRNA <- d.lfc_annot_adj_pgRNA %>%
-  dplyr::select(pgRNA_id, rep, paralog_pair, lfc_adj2, target_type:gene2_essential_flag, pgRNA_target, norm_ctrl_flag) %>%
-  ## rename final adjusted column to CRISPR_score
-  rename(CRISPR_score = lfc_adj2) ##Alice updated back to use adj2
+  rename(CRISPR_score = lfc_adj2) %>% ##Alice updated back to use adj2 
+  dplyr::select(-lfc_adj1)
 
 save_tbl(d.lfc_annot_adj_pgRNA)
 
@@ -472,17 +471,15 @@ rep_cor_plot <- make_rep_cor_plot(d.adj_mean_lfc_rep_cor_plot, d.adj_mean_lfc_re
 rep_cor_plot
 save_plot(rep_cor_plot)
 
-##Alice note- why isn't median of pos controls -1? -> because this is collapsed by target?
 ## target-level violin plot
-adjusted_norm_ctrl_violin_plot <- make_norm_ctrl_violin_plot(d.lfc_annot_adj_target, "target_mean_CS", "target_mean_adjusted_LFC")
+CS_target_violin_plot <- make_norm_ctrl_violin_plot(d.lfc_annot_adj_target, "target_mean_CS", "target_mean_CRISPR_score")
 
-adjusted_norm_ctrl_violin_plot +
-  facet_wrap(~rep)
+CS_target_violin_plot +
+    facet_wrap(~rep)
 
-save_plot(adjusted_norm_ctrl_violin_plot)
-save_plot(adjusted_norm_ctrl_violin_plot + facet_wrap(~rep))
+save_plot(CS_target_violin_plot)
+save_plot(CS_target_violin_plot + facet_wrap(~rep))
 
-##Alice not really using this step - how is it different than non-faceted version above?
 ## mean across reps violin plot
 d.lfc_annot_adj_target_rep_mean <- d.lfc_annot_adj_target %>%
   group_by(pgRNA_target) %>%
@@ -491,10 +488,10 @@ d.lfc_annot_adj_target_rep_mean <- d.lfc_annot_adj_target %>%
   dplyr::select(-c(rep, target_mean_CS, target_median_CS))
 
 
-rep_mean_adjusted_norm_ctrl_violin_plot <- make_norm_ctrl_violin_plot(d.lfc_annot_adj_target_rep_mean, "rep_target_mean_CS", "mean_adjusted_LFC_across_reps")
+rep_mean_CS_target_violin_plot <- make_norm_ctrl_violin_plot(d.lfc_annot_adj_target_rep_mean, "rep_target_mean_CS", "mean_targetCS_across_reps")
 
-rep_mean_adjusted_norm_ctrl_violin_plot
-save_plot(rep_mean_adjusted_norm_ctrl_violin_plot)
+rep_mean_CS_target_violin_plot
+save_plot(rep_mean_CS_target_violin_plot)
 
 ## get (& plot) mean across retained reps
 d.lfc_annot_adj_pgRNA_rep_mean <- d.lfc_annot_adj_pgRNA %>%
@@ -504,10 +501,10 @@ d.lfc_annot_adj_pgRNA_rep_mean <- d.lfc_annot_adj_pgRNA %>%
   dplyr::select(-c(rep, CRISPR_score))
 
 
-rep_mean_adj_pgRNA_norm_ctrl_violin_plot <- make_norm_ctrl_violin_plot(d.lfc_annot_adj_pgRNA_rep_mean, "rep_mean_CS", "mean_adjusted_LFC_across_reps")
+rep_mean_CS_pgRNA_violin_plot <- make_norm_ctrl_violin_plot(d.lfc_annot_adj_pgRNA_rep_mean, "rep_mean_CS", "mean_pgRNA_CS")
 
-rep_mean_adj_pgRNA_norm_ctrl_violin_plot
-save_plot(rep_mean_adj_pgRNA_norm_ctrl_violin_plot)
+rep_mean_CS_pgRNA_violin_plot
+save_plot(rep_mean_CS_pgRNA_violin_plot)
 
 
 
