@@ -65,7 +65,7 @@ print_kbl(head(d.counts, 10))
 
 ## pivot_longer to tidy format
 d.counts_long <- d.counts %>%
-  dplyr::select(-c(seq_1, seq_2)) %>%
+  dplyr::select(-c(seq_1, seq_2, pDNA)) %>%
   pivot_longer(!id, 
                names_to = "sample", 
                values_to = "count")
