@@ -41,6 +41,8 @@ args <- commandArgs(trailingOnly = TRUE)
 base_dir  <- args[1]
 cell_line <- args[2]
 
+
+
 source(file.path(base_dir, "00-shared_functions_and_variables.R"))
 
 contour_palette <- colorRampPalette(brewer.pal(n = 9, name ="Spectral"))(50)
@@ -161,10 +163,7 @@ d.counts_flagged_timepoint <-
   mutate(
     day = readr::parse_number(day_str),    # "00" -> 0
     # rep is already "RepA" from the second separate
-  ) %>%
-  filter(cell !="pDNA")
-
-
+  ) 
 
 d.counts_flagged_timepoint_named <- d.counts_flagged_timepoint %>%
   mutate(timepoint = case_when(
@@ -234,24 +233,6 @@ d.lfc_annot %>%
            (sqrt(positive_control_sd^2 + negative_control_sd^2)))
 
 ##calculate SSMD
-
-d.lfc_annot %>%
-  ungroup() %>%
-  filter(norm_ctrl_flag == "negative_control" | norm_ctrl_flag == "positive_control") %>%
-  mutate(keep_flag = case_when(
-    target_type == "ctrl_ctrl" ~ TRUE,
-    target_type == "gene_ctrl" & gene1_expressed_flag == TRUE ~ TRUE,
-    target_type == "ctrl_gene" & gene2_expressed_flag == TRUE ~ TRUE,
-    TRUE ~ FALSE)) %>% ## if these conditions are not met, set to F
-  filter(keep_flag == TRUE) %>%
-  group_by(rep, norm_ctrl_flag) %>%
-  summarize(mean = mean(lfc_late_vs_T0),
-            sd = sd(lfc_late_vs_T0)) %>%
-  pivot_wider(names_from = norm_ctrl_flag, 
-              values_from = c(mean, sd),
-              names_glue = "{norm_ctrl_flag}_{.value}") %>%
-  mutate(ssmd = (positive_control_mean - negative_control_mean) /
-           (sqrt(positive_control_sd^2 + negative_control_sd^2)))
 
 d.ssmd <- d.lfc_annot %>%
   filter(norm_ctrl_flag == "negative_control" | norm_ctrl_flag == "positive_control") %>%
