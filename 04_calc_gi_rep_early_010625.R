@@ -40,6 +40,7 @@ args <- commandArgs(trailingOnly = TRUE)
 base_dir  <- args[1]
 cell_line <- args[2]
 
+
 source(file.path(base_dir, "00-shared_functions_and_variables.R"))
 
 contour_palette <- colorRampPalette(brewer.pal(n = 9, name ="Spectral"))(50)
@@ -313,26 +314,6 @@ d.GI_scores_target_plot <- ggplot(d.GI_scores_target, aes(x = mean_expected_CS, 
   theme(aspect.ratio = square_ar)
 save_plot(d.GI_scores_target_plot)
 
-##Collapse target-level GI scores across reps - Added by Alice
-
-#d.GI_scores_target_rep <- d.GI_scores_target %>%
-  group_by(pgRNA_target) %>%
-  summarize(
-    rep_collapse_mean_GI_score = mean(mean_GI_score),
-    rep_collapse_mean_p_val = mean(p_val),
-    rep_collapse_mean_fdr = mean(fdr),
-    rep_collapse_mean_obs = mean(mean_observed_CS),
-    rep_collapse_mean_exp = mean(mean_expected_CS)
-  ) 
-
-#d.GI_scores_target_rep_collapsed <- d.GI_scores_target_rep %>%
-  left_join(
-    d.GI_scores_target %>% 
-      dplyr::select(paralog_pair, target_type, gene1_symbol, gene2_symbol, broad_target_type, pgRNA_target) %>%
-      distinct(pgRNA_target, .keep_all = TRUE),   # one row per target
-    by = "pgRNA_target"
-  )
-#save_tbl(d.GI_scores_target_rep_collapsed)
 
 #####ADD MORE FIGURES HERE#######
 
