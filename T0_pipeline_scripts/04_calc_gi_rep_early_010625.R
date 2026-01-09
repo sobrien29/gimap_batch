@@ -15,7 +15,7 @@ install_if_missing <- function(pkgs) {
 }
 
 # CRAN packages
-cran_packages <- c("tidyverse", "tidylog", "kableExtra", "pheatmap", "RColorBrewer")
+cran_packages <- c("tidyverse", "tidylog", "kableExtra", "pheatmap", "RColorBrewer", "ggrepel")
 install_if_missing(cran_packages)
 
 # Bioconductor packages
@@ -315,7 +315,85 @@ d.GI_scores_target_plot <- ggplot(d.GI_scores_target, aes(x = mean_expected_CS, 
 save_plot(d.GI_scores_target_plot)
 
 
-#####ADD MORE FIGURES HERE#######
+## rank scatter plot 
+quantiles <- quantile(d.GI_scores_target$mean_GI_score, probs = c(0.15, 0.85), na.rm = TRUE)
+
+rank_scatter <- ggplot <- d.GI_scores_target %>%
+  dplyr::ungroup() %>%
+  filter(target_type == "gene_gene") %>%
+  mutate(Rank = percent_rank(mean_GI_score)) %>%
+  ggplot(aes(
+    x = Rank,
+    y = mean_GI_score
+  )) +
+  geom_point(size = 1, alpha = 0.7) +
+  theme_classic() +
+  theme(legend.title = element_blank()) +
+  ylab("GI score") +
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = -0.5, linetype = "dashed") +
+  geom_hline(yintercept = 0.5, linetype = "dashed") + 
+  geom_text_repel(
+    data = d.GI_scores_target %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(target_type == "gene_gene") %>%
+      dplyr::mutate(Rank = percent_rank(mean_GI_score)) %>%
+      dplyr::filter(
+        mean_GI_score <= quantiles[1] |
+          mean_GI_score >= quantiles[2]
+      ),
+    aes(label = paralog_pair),
+    max.overlaps = 10, 
+    size=3
+  )
+
+rank_scatter
+save_plot(rank_scatter)
+##volcano plot
+
+volcano_plot <- gplot <- d.GI_scores_target %>%
+  filter(target_type == "gene_gene") %>% # get only double targeting
+  mutate(
+    logfdr = -log10(fdr),
+    pointColor = case_when(logfdr < 1 ~ "darkgrey",
+                           ((mean_GI_score < -0.5) & (logfdr > 1)) ~ "dodgerblue3",
+                           ((mean_GI_score > 0.5) & (logfdr > 1)) ~ "darkred",
+                           .default = "black"
+    )
+  ) %>%
+  ggplot(aes(
+    x = mean_GI_score,
+    y = logfdr,
+    color = pointColor
+  )) +
+  geom_point(size = 1, alpha = 0.7) +
+  theme_classic() +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  geom_vline(xintercept = -0.5, linetype = "dashed") +
+  geom_vline(xintercept = 0.25, linetype = "dashed") +
+  theme(legend.position = "none") +
+  scale_color_manual(values = c(
+    "darkgrey" = "darkgrey",
+    "dodgerblue3" = "dodgerblue3",
+    "darkred" = "darkred",
+    "black" = "black"
+  )) +
+  ylab("-log10(FDR)") +
+  xlab("Mean GI score") +
+  geom_text_repel(
+    data = function(df) {
+      df %>% filter(pointColor %in% c("dodgerblue3", "darkred"))
+    },
+    aes(label = paralog_pair),
+    size = 3,
+    max.overlaps = 15,
+    box.padding = 0.4,
+    point.padding = 0.3,
+    show.legend = FALSE
+  )
+
+volcano_plot
+save_plot(volcano_plot)
 
 ## Save output
 save_tbl(d.GI_scores_target)
